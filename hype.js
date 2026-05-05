@@ -1,0 +1,346 @@
+import React, { useState, useMemo } from 'react';
+import { 
+  TreePine, Users, ShoppingBag, HeartPulse, BookOpen, Lightbulb, 
+  ArrowLeft, Zap, Trophy, CheckCircle, AlertTriangle, Twitter, Send, RefreshCw, PenTool
+} from 'lucide-react';
+
+/**
+ * Hype Initiative CSR Simulator - Final Version
+ * للهوية: كحلي (#1a2233) وليموني فسفوري (#d4f04d)
+ */
+
+const App = () => {
+  const [view, setView] = useState('home'); 
+  const [selectedField, setSelectedField] = useState(null);
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [inputValue, setInputValue] = useState('');
+  const [impactResult, setImpactResult] = useState(null);
+  const [isOpening, setIsOpening] = useState(null);
+  const [visitorName, setVisitorName] = useState('');
+  
+  const HYPE_X_URL = "https://x.com/Hype_iec";
+
+  // --- بنك الأسئلة والعبارات باللغة العربية ---
+  const fieldData = useMemo(() => [
+    {
+      id: 'env',
+      title: 'البيئة والاستدامة',
+      symbol: '♣',
+      icon: <TreePine className="w-10 h-10" />,
+      questions: [
+        { 
+          q: "كم كيس بلاستيك تستهلك أسبوعياً عند تسوقك؟", 
+          unit: "Packs", 
+          threshold: 4, 
+          isEnv: true, 
+          pledgeText: "بتقليل استهلاك البلاستيك وحماية بيئة مملكتنا الغالية 🇸🇦", 
+          calc: (v) => v * 52, 
+          facts: ["استهلاكك السنوي يحتاج 450 سنة ليتحلل في تربتنا.", "السعودية تهدف لزراعة 10 مليارات شجرة لتعويض هذا الأثر."] 
+        },
+        { 
+          q: "كم علبة ماء بلاستيكية تشتري يومياً؟", 
+          unit: "Bottles", 
+          threshold: 2, 
+          isEnv: true, 
+          pledgeText: "باستخدام مطارة مياه مستدامة بدلاً من العلب البلاستيكية 🇸🇦", 
+          calc: (v) => v * 365, 
+          facts: ["علبك السنوية كفيلة بتغطية مساحة ملعب كرة قدم بالكامل.", "مبادرة السعودية الخضراء تهدف لحماية 30% من بيئتنا."] 
+        }
+      ]
+    },
+    {
+      id: 'vol',
+      title: 'العمل التطوعي',
+      symbol: '♥',
+      icon: <Users className="w-10 h-10" />,
+      questions: [
+        { 
+          q: "كم ساعة تطوعية تقدمها في الشهر؟", 
+          unit: "Hours", 
+          threshold: 5, 
+          isEnv: false, 
+          pledgeText: "بتخصيص وقت أكبر للعمل التطوعي للوصول لمليون متطوع 🇸🇦", 
+          calc: (v) => v * 12, 
+          facts: ["ساعة التطوع تساهم بـ 74 ريالاً في الاقتصاد الوطني.", "المملكة تطمح للوصول لمليون متطوع سنوياً بحلول 2030."] 
+        }
+      ]
+    },
+    {
+      id: 'eco',
+      title: 'الاقتصاد المحلي',
+      symbol: '♠',
+      icon: <ShoppingBag className="w-10 h-10" />,
+      questions: [
+        { 
+          q: "كم مرة تشتري من براندات سعودية شهرياً؟", 
+          unit: "Times", 
+          threshold: 3, 
+          isEnv: false, 
+          pledgeText: "بدعم المنتج السعودي كخيار أول لتعزيز اقتصادنا 🇸🇦", 
+          calc: (v) => v * 12, 
+          facts: ["دعم المنتج المحلي يرفع مساهمة المنشآت الصغيرة لـ 35%.", "حملة صنع في السعودية وصلت منتجاتها لأكثر من 170 دولة."] 
+        }
+      ]
+    },
+    {
+      id: 'health',
+      title: 'جودة الحياة',
+      symbol: '♦',
+      icon: <HeartPulse className="w-10 h-10" />,
+      questions: [
+        { 
+          q: "كم لتر مياه تشرب يومياً؟", 
+          unit: "Liters", 
+          threshold: 2.5, 
+          isEnv: false, 
+          pledgeText: "بالالتزام بشرب مياه كافية يومياً لتحسين صحتي 🇸🇦", 
+          calc: (v) => v * 365, 
+          facts: ["صحتك هي استثمارك الأول؛ المملكة تهدف لرفع متوسط العمر المتوقع.", "جودة الحياة تبدأ بوعيك الصحي اليومي."] 
+        }
+      ]
+    },
+    {
+      id: 'edu',
+      title: 'التعليم والمهارات',
+      symbol: '✦',
+      icon: <BookOpen className="w-10 h-10" />,
+      questions: [
+        { 
+          q: "كم ساعة تتعلم مهارة جديدة أسبوعياً؟", 
+          unit: "Hours", 
+          threshold: 4, 
+          isEnv: false, 
+          pledgeText: "بتطوير مهاراتي الشخصية للمساهمة في بناء الوطن 🇸🇦", 
+          calc: (v) => v * 52, 
+          facts: ["تطوير القدرات البشرية هو وقود رؤية المملكة للمستقبل.", "الاستثمار في عقلك هو أثرك الأبقى للمجتمع."] 
+        }
+      ]
+    },
+    {
+      id: 'innov',
+      title: 'الابتكار والتقنية',
+      symbol: '⚡',
+      icon: <Lightbulb className="w-10 h-10" />,
+      questions: [
+        { 
+          q: "كم فكرة تطويرية تقترحها لبيئتك سنوياً؟", 
+          unit: "Ideas", 
+          threshold: 1, 
+          isEnv: false, 
+          pledgeText: "بالمبادرة بالأفكار الابتكارية والحلول التقنية 🇸🇦", 
+          calc: (v) => v, 
+          facts: ["المملكة تتصدر عالمياً في النضج الرقمي؛ فكرتك تصنع فرقاً.", "الابتكار هو المحرك الأساسي لتحسين جودة الحياة."] 
+        }
+      ]
+    }
+  ], []);
+
+  // دالة فتح الباب والانتقال للسؤال
+  const handleDoorClick = (field) => {
+    setIsOpening(field.id);
+    const randomQ = field.questions[Math.floor(Math.random() * field.questions.length)];
+    setSelectedField(field);
+    setCurrentQuestion(randomQ);
+    
+    setTimeout(() => {
+      setView('input');
+      setIsOpening(null);
+    }, 600);
+  };
+
+  const processImpact = () => {
+    if (!inputValue) return;
+    const val = Number(inputValue);
+    const resultNum = currentQuestion.calc(val);
+    const isUnsatisfactory = selectedField.id === 'env' ? val > currentQuestion.threshold : val < currentQuestion.threshold;
+    const fact = currentQuestion.facts[Math.floor(Math.random() * currentQuestion.facts.length)];
+    
+    setImpactResult({ num: resultNum, txt: fact, isUnsatisfactory });
+    setView('result');
+  };
+
+  const getTwitterUrl = () => {
+    const text = view === 'pledge' || view === 'finish'
+      ? `أنا ${visitorName} أتعهد ${currentQuestion.pledgeText}.. مع مبادرة هايب! 🌟 @Hype_iec`
+      : `اكتشفتُ أثري المجتمعي السنوي (${impactResult?.num.toLocaleString('en-US')}) مع محاكي مبادرة هايب! 🇸🇦 @Hype_iec`;
+    return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+  };
+
+  return (
+    <div className="min-h-screen bg-[#1a2233] text-white font-sans rtl flex flex-col items-center p-6 md:p-12 select-none overflow-x-hidden" dir="rtl">
+      
+      {/* Header مع الشعار المتجاوب */}
+      <header className="w-full flex flex-col items-center mb-14 text-center">
+        {/* الشعار: يتغير حجمه حسب الشاشة */}
+        <img 
+          src="/logo.png" 
+          alt="Hype Logo" 
+          className="w-32 md:w-48 h-auto object-contain transition-all duration-500 drop-shadow-xl"
+          onError={(e) => e.target.style.display = 'none'} 
+        />
+        
+        <div className="flex flex-col items-center mt-4">
+          <div className="w-12 h-1 bg-[#d4f04d] opacity-40 mb-1"></div>
+          <h1 className="text-6xl md:text-7xl font-black text-[#d4f04d] italic tracking-tighter drop-shadow-[0_0_15px_rgba(212,240,77,0.4)]">
+            Hype
+          </h1>
+          <div className="w-12 h-1 bg-[#d4f04d] opacity-40 mt-1"></div>
+        </div>
+        <p className="text-slate-500 font-black tracking-[0.4em] text-[10px] uppercase mt-4">
+          Virtual CSR Simulator | محاكي المسؤولية
+        </p>
+      </header>
+
+      {/* Main Container */}
+      <div className="w-full max-w-4xl relative">
+        
+        {/* VIEW: HOME الأبواب */}
+        {view === 'home' && (
+          <div className="grid grid-cols-2 gap-6 md:gap-10 animate-in fade-in slide-in-from-bottom duration-700">
+            {fieldData.map((field) => (
+              <button 
+                key={field.id} 
+                onClick={() => handleDoorClick(field)} 
+                className="relative h-64 md:h-80 perspective-1000 group cursor-pointer"
+              >
+                {/* إطار الباب من الداخل */}
+                <div className="absolute inset-0 bg-[#0f172a] rounded-t-[4rem] border-2 border-slate-800 shadow-inner"></div>
+                
+                {/* لوحة الباب التي تفتح */}
+                <div className={`absolute inset-0 bg-[#1e293b] rounded-t-[4rem] border-2 border-slate-700 flex flex-col items-center justify-center transition-all duration-700 origin-right 
+                  ${isOpening === field.id ? 'rotate-y-[-110deg] opacity-0 shadow-2xl' : 'group-hover:border-[#d4f04d] group-hover:shadow-[0_0_30px_rgba(212,240,77,0.15)]'}`}>
+                   
+                   <div className="text-3xl mb-3 text-[#d4f04d] opacity-30 font-serif">{field.symbol}</div>
+                   
+                   <div className="bg-[#111827] p-4 md:p-5 rounded-3xl mb-4 text-[#d4f04d] group-hover:bg-[#d4f04d] group-hover:text-[#1a2233] transition-all transform group-hover:scale-105 shadow-xl">
+                     {field.icon}
+                   </div>
+                   
+                   <h3 className="text-lg md:text-2xl font-black tracking-tight">{field.title}</h3>
+                   
+                   {/* المقبض */}
+                   <div className="absolute right-6 top-1/2 -translate-y-1/2 w-2 h-14 bg-slate-800 rounded-full border border-slate-700 group-hover:bg-slate-600"></div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* VIEW: INPUT إدخال البيانات */}
+        {view === 'input' && (
+          <div className="animate-in zoom-in duration-500 bg-[#1e293b] rounded-[3rem] p-8 md:p-12 border-2 border-[#d4f04d] text-center max-w-2xl mx-auto shadow-2xl relative">
+            <h2 className="text-2xl md:text-4xl font-black mb-12 text-white leading-tight px-4">{currentQuestion.q}</h2>
+            <div className="flex flex-col items-center gap-10">
+              <div className="relative w-full max-w-xs group">
+                <input 
+                  type="number" 
+                  value={inputValue} 
+                  onChange={(e) => setInputValue(e.target.value)} 
+                  className="w-full bg-transparent border-b-8 border-slate-700 focus:border-[#d4f04d] text-7xl md:text-8xl font-black text-center p-4 outline-none transition-all text-[#d4f04d] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
+                  placeholder="0" 
+                  autoFocus 
+                />
+                <div className="text-slate-500 font-black mt-4 uppercase tracking-[0.4em] text-[10px]">{currentQuestion.unit}</div>
+              </div>
+              <button 
+                onClick={processImpact}
+                className="w-full bg-[#d4f04d] text-[#1a2233] font-black text-2xl py-6 rounded-3xl hover:scale-105 transition-all shadow-xl flex items-center justify-center gap-3"
+              >
+                تحليل الأثر <Zap className="w-7 h-7 fill-current" />
+              </button>
+              <button onClick={() => setView('home')} className="text-slate-500 font-bold hover:text-white flex items-center gap-2 mt-4 transition-colors">
+                <ArrowLeft className="w-5 h-5" /> رجوع للأبواب
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* VIEW: RESULT عرض النتيجة */}
+        {view === 'result' && (
+          <div className="animate-in slide-in-from-top duration-600 flex flex-col items-center">
+            <div className="bg-[#1e293b] rounded-[4rem] p-10 md:p-14 border-2 border-[#d4f04d] text-center w-full max-w-3xl shadow-2xl relative">
+              <div className={`absolute -top-10 left-1/2 -translate-x-1/2 p-5 rounded-full shadow-2xl ${impactResult.isUnsatisfactory ? 'bg-orange-500 text-white' : 'bg-green-500 text-white'}`}>
+                {impactResult.isUnsatisfactory ? <AlertTriangle className="w-12 h-12" /> : <Trophy className="w-12 h-12" />}
+              </div>
+              
+              <div className="mt-10 mb-6">
+                <span className="text-slate-500 font-black mb-2 block uppercase tracking-widest text-[10px]">Annual Estimate | التقدير السنوي</span>
+                <h3 className={`text-7xl md:text-9xl font-black tracking-tighter ${impactResult.isUnsatisfactory ? 'text-orange-400' : 'text-[#d4f04d]'}`}>
+                  {impactResult.num.toLocaleString('en-US')}
+                </h3>
+              </div>
+              
+              <div className={`bg-slate-900/40 p-8 rounded-[3rem] border-r-8 text-right mb-10 shadow-inner ${impactResult.isUnsatisfactory ? 'border-orange-500' : 'border-[#d4f04d]'}`}>
+                <p className="text-xl md:text-2xl font-bold text-white italic leading-relaxed">"{impactResult.txt}"</p>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-6 mb-6">
+                <button onClick={() => setView('home')} className="flex-1 bg-white text-[#1a2233] font-black py-5 rounded-3xl hover:bg-[#d4f04d] transition-all text-xl">باب آخر</button>
+                {impactResult.isUnsatisfactory ? (
+                  <button onClick={() => setView('pledge')} className="flex-1 bg-orange-500 text-white font-black py-5 rounded-3xl hover:scale-105 transition-all shadow-xl text-xl">عهد التغيير 🇸🇦</button>
+                ) : (
+                  <a href={getTwitterUrl()} target="_blank" rel="noopener noreferrer" className="flex-1 bg-[#d4f04d] text-[#1a2233] font-black py-5 rounded-3xl shadow-xl no-underline flex items-center justify-center gap-2 text-xl hover:scale-105 transition-all">
+                    <Twitter className="w-6 h-6 fill-current" /> شارك إنجازك
+                  </a>
+                )}
+              </div>
+              <p className="text-[#d4f04d] text-[10px] font-bold mt-4 uppercase tracking-widest opacity-60">تابعنا وشارك أثرك على @Hype_iec</p>
+            </div>
+          </div>
+        )}
+
+        {/* VIEW: PLEDGE صفحة التعهد */}
+        {view === 'pledge' && (
+          <div className="animate-in zoom-in duration-500 bg-[#1e293b] rounded-[4rem] p-10 border-2 border-orange-400 text-center max-w-2xl mx-auto shadow-2xl relative">
+             <h2 className="text-2xl md:text-3xl font-black text-[#d4f04d] mb-8 tracking-tight">ميثاق التغيير المجتمعي</h2>
+             <div className="bg-[#111827] p-8 rounded-3xl border border-slate-800 text-right mb-8">
+               <p className="text-lg md:text-xl font-bold text-slate-100 italic leading-relaxed">أنا {visitorName || "........"} أتعهد {currentQuestion.pledgeText}</p>
+             </div>
+             <input 
+               type="text" 
+               value={visitorName} 
+               onChange={(e) => setVisitorName(e.target.value)} 
+               className="w-full bg-[#1a2233] border-2 border-slate-700 rounded-2xl p-5 text-center text-xl font-bold focus:border-[#d4f04d] outline-none text-white shadow-inner mb-8" 
+               placeholder="اكتب اسمك هنا" 
+               autoFocus 
+             />
+             <div className="flex flex-col gap-4">
+               <a href={getTwitterUrl()} target="_blank" rel="noopener noreferrer" className={`w-full bg-orange-500 text-white font-black text-2xl py-6 rounded-3xl shadow-xl no-underline flex items-center justify-center gap-2 ${!visitorName ? 'opacity-50 pointer-events-none' : 'hover:scale-105 transition-all'}`}>
+                 تعهد وشارك في تويتر <Twitter className="w-6 h-6 fill-current" />
+               </a>
+               <button onClick={() => { if(visitorName) setView('finish'); }} className="text-slate-500 font-bold hover:text-white transition-all underline underline-offset-4">تأكيد التعهد داخلياً</button>
+             </div>
+          </div>
+        )}
+
+        {/* VIEW: FINISH شكر النهاية */}
+        {view === 'finish' && (
+          <div className="animate-in zoom-in text-center py-20 bg-[#1e293b] rounded-[4rem] border-2 border-[#d4f04d] max-w-2xl mx-auto shadow-2xl px-6 relative overflow-hidden">
+            <CheckCircle className="w-20 md:w-24 h-20 md:h-24 text-[#d4f04d] mx-auto mb-8 animate-bounce" />
+            <h2 className="text-3xl md:text-4xl font-black text-white mb-6">شكراً لك يا بطل هايب!</h2>
+            <p className="text-lg md:text-xl text-slate-400 max-w-md mx-auto leading-relaxed mb-10 italic">تم استلام تعهدك بنجاح. فخورون بك وبمبادرتك للتغيير وننتظرك في حسابنا @Hype_iec</p>
+            <div className="flex flex-col items-center gap-4">
+               <a href={getTwitterUrl()} target="_blank" rel="noopener noreferrer" className="bg-sky-500 text-white px-12 py-5 rounded-2xl font-black text-xl flex items-center gap-3 no-underline shadow-lg hover:scale-105 transition-all">مشاركة الآن <Twitter className="w-6 h-6 fill-current" /></a>
+               <button onClick={() => setView('home')} className="mt-4 text-slate-500 font-bold hover:text-[#d4f04d] underline underline-offset-8 transition-all">العودة للأبواب الرئيسية</button>
+            </div>
+          </div>
+        )}
+
+      </div>
+
+      {/* Footer Symbols */}
+      <footer className="mt-24 opacity-10 flex gap-8 text-3xl md:text-4xl text-[#d4f04d] pointer-events-none">
+         <span>♥</span><span>♦</span><span>♠</span><span>♣</span>
+      </footer>
+      <p className="font-black text-[9px] text-slate-700 tracking-[0.7em] uppercase mt-4 mb-10 italic">Hype Initiative &copy; 2024 | مبادرة هايب للمسؤولية المجتمعية</p>
+
+      {/* CSS Logic for 3D Doors & Perspective */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .perspective-1000 { perspective: 1000px; }
+        .rotate-y-[-110deg] { transform: rotateY(-110deg); }
+      `}} />
+    </div>
+  );
+};
+
+export default App;
